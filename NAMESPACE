@@ -2,6 +2,7 @@
 
 export(addRD)
 export(ca43k)
+export(ca43kAnVIL)
 export(get_ds4841)
 export(htx_app)
 export(htx_load)

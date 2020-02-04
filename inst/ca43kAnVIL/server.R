@@ -68,17 +68,37 @@ accumTokens=NULL
       insertTab("tabs", tabPanel(x, {
         renderDataTable(retrieve_doc(x, docs))}, id=x),
         target="titles", position="after")})
-    output$titleTable = DT::renderDataTable(
+    output$titleTable = DT::renderDataTable( 
               datatable(buildTitleTable(), escape=FALSE ))
     })
   observeEvent(input$titleTable_rows_selected, {
-       newt = accumtitles$docs[ input$titleTable_rows_selected ]
+       newt = accumtitles$docs[ input$titleTable_rows_selected ]      
        accumTokens <<- unique(c(accumTokens, newt))
        updateSelectInput(session, "keep", selected=accumTokens)
        })
+observeEvent(input$dldata, {
+
+        msg = ifelse(is.null(se), "listOfDFs-", "SE-")
+        filename=paste0(getwd(),"/",msg, Sys.Date(), '.rds', sep='')
+        cat(filename)
+        md = lapply(input$keep, function(x) retrieve_doc(x, docs))
+        names(md) = input$keep
+        if (is.null(se)) {
+            ans = md
+            } else {
+                ans = sefilter(se, input$keep)
+                md = lapply(md, function(x) x[which(x$experiment.accession %in%
+                          colnames(ans)),])
+                metadata(ans) = c(metadata(ans), md)
+                   }
+                saveRDS(ans, file=filename)
+                showNotification(paste("File Downloaded to",filename))
+
+     })
+
   observeEvent(input$cleartabs, {
     showNotification("After clearing you must change the query string or displays will not update.")
-    for (i in tabStack) removeTab("tabs", target=i)
+    for (i in tabStack) removeTab("tabs", target=i) 
     tabStack <<- NULL
     })
   observeEvent(input$cleartitles, {
@@ -109,11 +129,12 @@ accumTokens=NULL
        })
      output$sessInf = renderPrint( sessionInfo() )
 
+
      output$downloadData <- downloadHandler(
               filename = function() {
                 msg = ifelse(is.null(se), "listOfDFs-", "SE-")
                 paste(msg, Sys.Date(), '.rds', sep='')
-                },
+                },  
               content = function(con) {
                 md = lapply(input$keep, function(x) retrieve_doc(x, docs))
                 names(md) = input$keep
@@ -127,6 +148,6 @@ accumTokens=NULL
                    }
                 saveRDS(ans, file=con)
                 }, contentType="application/octet-stream"
-               )
+               )    
 
  }
